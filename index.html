@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Helpdesk Performance Dashboard — Blue Accent · Times (Presenter Toast · Shimmer · Toggle · Native Table)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.plot.ly/plotly-3.4.0.min.js" charset="utf-8"></script>
+  <style>
+    :root { --text:#000; --accent-blue-1:#2563eb; --accent-blue-1-l40:#93c5fd; --glass-bg:rgba(255,255,255,0.90); --glass-brd:rgba(0,0,0,0.06); --glass-shadow:rgba(16,18,40,0.10); --scale:0.85; }
+    *{box-sizing:border-box}
+
+    @media (prefers-reduced-motion: reduce) { .soft-in, .panel, .chart-refresh, #chartSLA .custom-sla-legend, header, .filters label, .panel:hover, #toast { animation:none!important; transition:none!important; } }
+    .no-anim * { animation:none!important; transition:none!important; }
+    .no-anim #chartSLA.alert { animation:none!important; box-shadow:none!important; }
+    .no-anim .shimmer::after { animation:none!important; }
+
+    .soft-in{opacity:0;transform:translateY(8px);animation:softIn .48s cubic-bezier(.22,.61,.36,1) forwards}
+    @keyframes softIn{to{opacity:1;transform:translateY(0)}}
+
+    body{margin:0;color:var(--text);font-family:"Times New Roman", Times, serif;background:radial-gradient(1200px 800px at -10% -10%, #e8f6ff 0%, transparent 60%),radial-gradient(1200px 900px at 110% 0%, #f5f7fa 0%, transparent 55%),linear-gradient(180deg,#f5f7fa 0%,#fff 100%);min-height:100vh;font-size:calc(16px*var(--scale))}
+    header{position:sticky;top:0;z-index:10;padding:calc(14px*var(--scale)) calc(20px*var(--scale));display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:calc(12px*var(--scale));border-bottom:1px solid var(--glass-brd);background:linear-gradient(180deg,var(--accent-blue-1-l40) 0%,rgba(255,255,255,0.9) 100%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 22px var(--glass-shadow);color:var(--text);transition:box-shadow .18s ease}
+    header.scrolled{box-shadow:0 10px 26px rgba(16,18,40,0.16)}
+    header h1{margin:0;font-size:calc(20px*var(--scale));font-weight:800;letter-spacing:.2px;color:var(--text);font-family:"Times New Roman", Times, serif}
+    .toolbar{justify-self:end;display:flex;gap:calc(10px*var(--scale));align-items:center;flex-wrap:wrap}
+
+    input[type=file],select,input[type=date],button,input[type=range],input[type=number]{background:var(--glass-bg);color:var(--text);border:1px solid var(--glass-brd);border-radius:10px;padding:calc(8px*var(--scale)) calc(12px*var(--scale));box-shadow:0 6px 18px var(--glass-shadow);font-size:calc(12px*var(--scale));font-family:"Times New Roman", Times, serif}
+    button.ghost{background:transparent;border-color:var(--glass-brd);color:var(--text)}
+    button.primary{background:var(--accent-blue-1);border-color:var(--accent-blue-1);color:#fff}
+
+    .container{padding:calc(18px*var(--scale)) calc(20px*var(--scale)) calc(24px*var(--scale))}
+    .grid{display:grid;grid-template-columns:340px 1fr;gap:calc(16px*var(--scale));align-items:start}
+    @media(max-width:1024px){.grid{grid-template-columns:1fr}}
+
+    .panel{background:rgba(255,255,255,0.96);border:1px solid var(--glass-brd);border-radius:16px;padding:calc(14px*var(--scale));box-shadow:0 16px 40px var(--glass-shadow);color:var(--text);opacity:0;transform:translateY(6px);animation:panelIn .42s cubic-bezier(.22,.61,.36,1) forwards;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+    .panel:nth-of-type(1){animation-delay:.04s}.panel:nth-of-type(2){animation-delay:.08s}.panel:nth-of-type(3){animation-delay:.12s}.panel:nth-of-type(4){animation-delay:.16s}.panel:nth-of-type(5){animation-delay:.20s}.panel:nth-of-type(6){animation-delay:.24s}
+    @keyframes panelIn{to{opacity:1;transform:translateY(0)}}
+    .panel:hover{transform:translateY(-1px);box-shadow:0 18px 44px rgba(16,18,40,0.12);border-color:rgba(0,0,0,0.08)}
+
+    .panel h3{margin:0 0 calc(10px*var(--scale));font-size:calc(14px*var(--scale));color:var(--text);letter-spacing:.25px;font-weight:700;font-family:"Times New Roman", Times, serif}
+
+    .filters label{font-weight:700;transition:color .18s ease}
+    .filters .row{display:grid;grid-template-columns:1fr 1fr;gap:calc(10px*var(--scale));margin-bottom:calc(12px*var(--scale))}
+    .filters label{display:block;font-size:calc(12px*var(--scale));color:var(--text);margin-bottom:calc(4px*var(--scale))}
+    .filters label:focus-within{color:#000;text-decoration:underline}
+    .filters select{width:100%;min-width:0;color:var(--text);transition:box-shadow .18s ease,border-color .18s ease}
+    .filters select:focus{outline:none;border-color:rgba(37,99,235,0.55);box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
+
+    .small{font-size:calc(11px*var(--scale));color:var(--text);opacity:.85}
+    .pill{display:inline-block;padding:calc(2px*var(--scale)) calc(8px*var(--scale));border:1px solid var(--glass-brd);border-radius:999px;font-size:calc(11px*var(--scale));color:var(--text);background:rgba(147,197,253,0.35)}
+    .flex{display:flex;align-items:center;gap:calc(10px*var(--scale));flex-wrap:wrap}
+
+    .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(12px*var(--scale))}
+    .kpi{background:rgba(255,255,255,0.98);border-radius:14px;padding:calc(12px*var(--scale));border:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 rgba(255,255,255,0.65),0 8px 30px var(--glass-shadow);color:var(--text)}
+    .kpi .label{font-size:calc(11px*var(--scale));color:var(--text)} .kpi .value{font-size:calc(22px*var(--scale));font-weight:800;margin-top:calc(4px*var(--scale));color:var(--text)} .kpi .sub{font-size:calc(11px*var(--scale));color:var(--text);opacity:.8}
+
+    .charts{display:grid;gap:calc(16px*var(--scale))}
+    @media(min-width:1100px){.charts{grid-template-columns:1fr 1fr}.charts .wide{grid-column:1 / -1}}
+    .chart-wrap{padding-inline:0px;position:relative}
+
+    .chart-refresh{animation:chartBlink .35s ease-out}
+    @keyframes chartBlink{from{opacity:.5}to{opacity:1}}
+
+    #chartSLA .custom-sla-legend{position:absolute;right:8px;bottom:6px;background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 8px;font-size:calc(11px*var(--scale));color:#000;box-shadow:0 2px 8px rgba(0,0,0,0.05);opacity:0;transform:translateY(4px);animation:legendIn .28s ease-out .1s forwards}
+    #chartSLA .custom-sla-legend .item{display:inline-flex;align-items:center;gap:6px;margin-inline:6px;transition:transform .16s ease,filter .16s ease}
+    #chartSLA .custom-sla-legend .item:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    #chartSLA .custom-sla-legend .swatch{width:10px;height:10px;display:inline-block;border-radius:2px}
+    @keyframes legendIn{to{opacity:1;transform:translateY(0)}}
+
+    #chartSLA.alert{animation:slaPulse 1.4s ease-in-out 3;border-radius:12px;box-shadow:0 0 0 0 rgba(239,68,68,0.25)}
+    @keyframes slaPulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.25)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+
+    .shimmer{position:relative;overflow:hidden;background:rgba(0,0,0,0.06);border-radius:10px;min-height:160px}
+    .shimmer::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.65),transparent);transform:translateX(-100%);animation:shimmerMove 1.15s linear infinite}
+    @keyframes shimmerMove{to{transform:translateX(100%)}}
+
+    #toast{position:fixed;z-index:40;background:rgba(37,99,235,0.96);color:#fff;border-radius:10px;border:1px solid rgba(0,0,0,0.08);box-shadow:0 8px 26px rgba(16,18,40,0.18);padding:10px 12px;font-size:13px;font-family:"Times New Roman", Times, serif;opacity:0;pointer-events:none;transition:opacity .22s ease, transform .22s ease;right:16px;bottom:16px;left:auto;top:auto;--tx:0;--ty:8px;transform:translate(var(--tx), var(--ty))}
+    #toast.show{opacity:1;transform:translate(var(--tx), 0)}
+    #toast .muted{opacity:.85}
+    #toast.topcenter{right:auto;bottom:auto;top:10px;left:50%;--tx:-50%;--ty:-12px;padding:8px 10px;border-radius:8px;box-shadow:0 6px 18px rgba(16,18,40,0.16);font-size:12px}
+
+    /* Layout safety + native table styles */
+    #tableResourceWeekly, #tableDiv { overflow:auto; max-height:65vh; min-height:220px; }
+    #tableDiv table { border-collapse:collapse; min-width: 1400px; }
+    #tableDiv thead th{ position:sticky; top:0; background:rgba(147,197,253,0.85); z-index:1; }
+    #tableDiv th, #tableDiv td{ border:1px solid rgba(0,0,0,0.12); padding:8px 10px; font-size:12px; color:#000; }
+    #tableDiv tbody tr:nth-child(even){ background:rgba(0,0,0,0.025); }
+    /* Column sizing helpers */
+    .col-id{width:96px} .col-customer{width:200px} .col-project{width:140px} .col-sev{width:70px}
+    .col-priority{width:90px} .col-env{width:110px} .col-scope{width:130px} .col-subcat{width:180px}
+    .col-ptn{width:160px} .col-ptc{width:160px} .col-resp{width:110px} .col-reso{width:120px}
+    .col-report{width:150px} .col-first{width:150px} .col-close{width:150px} .col-status{width:90px} .col-assignee{width:150px}
+  </style>
+</head>
+<body class="soft-in">
+  <header>
+    <h1>Helpdesk Performance Dashboard</h1>
+    <div class="toolbar">
+      <input type="file" id="fileInput" accept=".json,application/json" />
+      <button id="resetFilters" class="ghost">Reset filters</button>
+      <div class="pad-controls" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(147,197,253,0.45);border:1px solid var(--glass-brd);border-radius:10px;padding:6px 10px;">
+        <label class="small"><input type="radio" name="padUnit" id="padPx" value="px" checked> px</label>
+        <label class="small"><input type="radio" name="padUnit" id="padPct" value="%"> %</label>
+        <input type="range" id="padValue" min="0" max="200" step="2" value="32" />
+        <span id="padLabel" class="small">Padding: 32px (left & right)</span>
+      </div>
+      <label class="small"><input type="checkbox" id="toggleAnim" checked> Animations</label>
+      <label class="small"><input type="checkbox" id="togglePresenterToast"> Presenter toast</label>
+      <button id="exportCsv" class="primary" disabled>Export CSV</button>
+    </div>
+  </header>
+
+  <div class="container grid">
+    <aside class="panel filters">
+      <h3>Filters</h3>
+      <div class="row">
+        <div>
+          <label for="dateFrom">From</label>
+          <input type="date" id="dateFrom" />
+        </div>
+        <div>
+          <label for="dateTo">To</label>
+          <input type="date" id="dateTo" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="severity">Severity (NewgenSeverity)</label>
+          <select id="severity" multiple size="4"></select>
+        </div>
+        <div>
+          <label for="priority">Customer Priority</label>
+          <select id="priority" multiple size="4"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="userEnv">User Environment</label>
+          <select id="userEnv" multiple size="4"></select>
+        </div>
+        <div>
+          <label for="supportScope">Support Scope</label>
+          <select id="supportScope" multiple size="4"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="customer">Customer</label>
+          <select id="customer" multiple size="6"></select>
+        </div>
+        <div>
+          <label for="project">Project</label>
+          <select id="project" multiple size="6"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="category">Issue Sub Category</label>
+          <select id="category" multiple size="6"></select>
+        </div>
+        <div>
+          <label>Flags</label>
+          <div class="flex">
+            <label class="small"><input type="checkbox" id="onlyGold" /> Only Gold Customers</label>
+            <label class="small"><input type="checkbox" id="onlyOpen" /> Only Open Tickets</label>
+            <label class="small"><input type="checkbox" id="onlyBreach" /> Only SLA Breaches</label>
+          </div>
+        </div>
+      </div>
+      <p class="small">Tip: Hold <span class="pill">Ctrl/Cmd</span> to multi-select in lists.</p>
+    </aside>
+
+    <main class="panel">
+      <h3>Overview</h3>
+      <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi"><div class="label">Open tickets</div><div class="value" id="kpiOpen">—</div><div class="sub" id="kpiOpenSub"></div></div>
+        <div class="kpi"><div class="label">Response SLA %</div><div class="value" id="kpiRespSLA">—</div><div class="sub" id="kpiRespSLASub"></div></div>
+        <div class="kpi"><div class="label">Resolution SLA %</div><div class="value" id="kpiResoSLA">—</div><div class="sub" id="kpiResoSLASub"></div></div>
+      </div>
+
+      <div class="charts">
+        <div class="panel wide">
+          <h3>1) Ticket Volume Trend (Tickets Over Time)</h3>
+          <div class="chart-wrap"><div id="chartVolume" style="height:304px;"></div></div>
+        </div>
+        <div class="panel">
+          <h3>2) Ticket Distribution by Problem Type (Vertical)</h3>
+          <div class="flex" style="margin-bottom:6px;">
+            <label class="small">Source:
+              <select id="problemTypeSource">
+                <option value="Newgen">Problem Type (Newgen)</option>
+                <option value="Customer">Problem Type (Customer)</option>
+              </select>
+            </label>
+          </div>
+          <div class="chart-wrap"><div id="chartProblemType" style="height:336px;"></div></div>
+        </div>
+        <div class="panel">
+          <h3>3) SLA Compliance Rate (Donut)</h3>
+          <div class="chart-wrap"><div id="chartSLA" style="height:304px; position:relative;"></div></div>
+          <div class="small">Response vs Resolution shown side-by-side.</div>
+        </div>
+        <div class="panel">
+          <h3>4) Ticket Distribution by Severity</h3>
+          <div class="chart-wrap"><div id="chartSeverity" style="height:304px;"></div></div>
+        </div>
+        <div class="panel">
+          <h3>5) Top Customers / Projects by Ticket Volume (Vertical)</h3>
+          <div class="flex" style="margin-bottom:6px;">
+            <label class="small"><input type="radio" name="topType" value="Customer" checked> Customers</label>
+            <label class="small"><input type="radio" name="topType" value="Project"> Projects</label>
+            <label class="small">Top N: <input type="number" id="topN" min="3" max="25" value="10" style="width:70px; margin-left:6px;"></label>
+          </div>
+          <div class="chart-wrap"><div id="chartTop" style="height:384px;"></div></div>
+        </div>
+        <div class="panel wide">
+          <h3>Resource-wise Weekly Closed Tickets</h3>
+          <div class="inline-controls" style="margin-bottom:6px;">
+            <label class="small">Start date: <input type="date" id="rwStartDate" /></label>
+            <label class="small">Weeks: <input type="number" id="rwWeeks" min="1" max="26" step="1" value="2" style="width:90px;"/></label>
+            <span class="small" id="rwRangeLabel"></span>
+          </div>
+          <div class="chart-wrap"><div id="tableResourceWeekly" class="small"></div></div>
+          <div class="small" id="rwTotalsNote" style="margin-top:6px;"></div>
+        </div>
+        <div class="panel wide">
+          <h3>Filtered Tickets (table view)</h3>
+          <div class="chart-wrap"><div id="tableDiv" class="small"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    let LAST_ROWS=[], DATA=[], FILTERS={};
+    let WILL_TOAST=false, ANIMATIONS_ENABLED=true, PRESENTER_TOAST=false;
+
+    const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const parseMaybeDate=(s)=>{if(!s||typeof s!=="string")return null;const parts=s.trim().split(" ");const dmy=parts[0].split("-");if(dmy.length!==3)return isFinite(Date.parse(s))?new Date(s):null;const dd=parseInt(dmy[0],10);const mm=MONTHS[(dmy[1]||"").slice(0,3).toLowerCase()];const yyyy=parseInt(dmy[2],10);if(Number.isNaN(dd)||mm===undefined||Number.isNaN(yyyy))return null;let hh=0,mi=0,ss=0;if(parts[1]){const t=parts[1].split(":");hh=parseInt(t[0]||0,10);mi=parseInt(t[1]||0,10);ss=parseInt(t[2]||0,10)}return new Date(yyyy,mm,dd,hh,mi,ss)};
+    const toYMD=(d)=>{if(!d)return null;const yyyy=d.getFullYear();const mm=String(d.getMonth()+1).padStart(2,'0');const dd=String(d.getDate()).padStart(2,'0');return `${yyyy}-${mm}-${dd}`};
+    const addDays=(d,days)=>{const x=new Date(d);x.setDate(x.getDate()+days);return x};
+    const pct=(n,d)=>d?(100*n/d):0; const uniq=(arr)=>[...new Set(arr.filter(v=>v!=null&&v!==''))]; const fmtDMY=(d)=>{const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');const yyyy=d.getFullYear();return `${dd}-${mm}-${yyyy}`};
+
+    const exportBtn=document.getElementById('exportCsv');
+    const toggleAnim=document.getElementById('toggleAnim');
+    toggleAnim.addEventListener('change',()=>{ ANIMATIONS_ENABLED=!!toggleAnim.checked; document.body.classList.toggle('no-anim', !ANIMATIONS_ENABLED); });
+    const togglePresenterToast=document.getElementById('togglePresenterToast');
+    togglePresenterToast.addEventListener('change',()=>{ PRESENTER_TOAST=!!togglePresenterToast.checked; });
+
+    const CHART_IDS=['chartVolume','chartProblemType','chartSLA','chartSeverity','chartTop','tableResourceWeekly','tableDiv'];
+    function addShimmerAll(){ CHART_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('shimmer'); }); }
+    function removeShimmer(id){ const el=document.getElementById(id); if(el) el.classList.remove('shimmer'); }
+    addShimmerAll();
+
+    const toastEl=document.getElementById('toast');
+    function showToast(message){ if(!toastEl) return; toastEl.textContent=''; const main=document.createElement('span'); main.textContent=message+' '; const time=document.createElement('span'); time.className='muted'; time.textContent=new Date().toLocaleTimeString(); toastEl.appendChild(main); toastEl.appendChild(time); toastEl.classList.remove('show','topcenter'); if(PRESENTER_TOAST) toastEl.classList.add('topcenter'); void toastEl.offsetWidth; toastEl.classList.add('show'); setTimeout(()=> toastEl.classList.remove('show'), 1600); }
+
+    document.getElementById('fileInput').addEventListener('change',(e)=>{ const f=e.target.files[0]; if(!f) return; addShimmerAll(); WILL_TOAST=true; const reader=new FileReader(); reader.onload=()=>{ try{ const parsed=JSON.parse(reader.result); if(!Array.isArray(parsed)) throw new Error('JSON root must be an array of ticket objects.'); initData(parsed); }catch(err){ alert('Could not parse JSON. Ensure it is a JSON array of ticket objects.\n'+err.message); console.error(err);} }; reader.readAsText(f); });
+
+    const padPx=document.getElementById('padPx'); const padPct=document.getElementById('padPct'); const padValue=document.getElementById('padValue'); const padLabel=document.getElementById('padLabel');
+    const PADDING={mode:'px',value:32};
+    function updatePadLabel(){ const unit=PADDING.mode, val=padValue.value; padLabel.textContent=`Padding: ${val}${unit} (left & right)`; }
+    padPx.addEventListener('change',()=>{ if(padPx.checked){ PADDING.mode='px'; padValue.max='200'; if(parseInt(padValue.value,10)>200) padValue.value='32'; updatePadLabel(); rerender(); } });
+    padPct.addEventListener('change',()=>{ if(padPct.checked){ PADDING.mode='%'; padValue.max='50'; if(parseInt(padValue.value,10)>50) padValue.value='16'; updatePadLabel(); rerender(); } });
+    padValue.addEventListener('input',()=>{ PADDING.value=parseInt(padValue.value,10)||0; updatePadLabel(); rerender(); });
+
+    exportBtn.addEventListener('click',()=>{ if(!LAST_ROWS||!LAST_ROWS.length) return; const csv=buildCSV(LAST_ROWS); const blob=new Blob(["\uFEFF"+csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); a.href=url; a.download=`helpdesk_export_${stamp}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); });
+
+    function csvEscape(val){ if(val===null||val===undefined) return '""'; const s=String(val).replace(/"/g,'""'); return '"'+s+'"'; }
+    function buildCSV(rows){ const preferred=['Ticketid','Customername','ProjectName','NewgenSeverity','Customer Priority','UserEnvironmentType','Support_Scope','Newgen Issue Sub Category','Problem Type (Newgen)','Problem Type (Customer)','Response_TicketSLAMet','Resolution_TicketSLAMet','ReportingTime','FirstResponseTime','ClosingDate','CurrentStatus','AssigntoUserName','Subject']; const allKeys=new Set(); rows.forEach(r=>Object.keys(r).forEach(k=>allKeys.add(k))); ['_created','_responded','_closed','_createdYMD','_closedYMD','_isClosed','_isGold','_respSLAMet','_resoSLAMet','_transfer','_reopen'].forEach(k=>allKeys.delete(k)); const remaining=[...allKeys].filter(k=>!preferred.includes(k)).sort((a,b)=>String(a).localeCompare(String(b))); const cols=[...preferred.filter(k=>allKeys.has(k)),...remaining]; const header=cols.map(csvEscape).join(','); const lines=rows.map(r=>cols.map(c=>csvEscape(r[c])).join(',')); return [header,...lines].join('\n'); }
+
+    function initData(arr){ DATA=arr.map(r=>{ const created=parseMaybeDate(r.ReportingTime); const responded=parseMaybeDate(r.FirstResponseTime); const closed=parseMaybeDate(r.ClosingDate); const isClosed=!!closed || (String(r.CurrentStatus||'').toLowerCase()==='exit'); const isGold=String(r.GoldCustomer||'').toLowerCase()==='yes'; const respSLAMet=String(r['Response_TicketSLAMet']||'').toLowerCase()==='yes'; const resoSLAMet=String(r['Resolution_TicketSLAMet']||'').toLowerCase()==='yes'; return {...r,_created:created,_responded:responded,_closed:closed,_createdYMD:toYMD(created),_closedYMD:toYMD(closed),_isClosed:isClosed,_isGold:isGold,_respSLAMet:respSLAMet,_resoSLAMet:resoSLAMet,_transfer:(String(r.TicketTransferflag||'').toLowerCase()==='true'),_reopen:(String(r.TicketReopenFlag||'').toLowerCase()==='true')}; }); bootstrapFilters(DATA); applyFiltersAndRender(); }
+
+    function bootstrapFilters(data){ const by=(k)=>uniq(data.map(d=>d[k])).sort((a,b)=> String(a).localeCompare(String(b))); fillSelect('severity', by('NewgenSeverity')); fillSelect('priority', by('Customer Priority')); fillSelect('userEnv', by('UserEnvironmentType')); fillSelect('supportScope', by('Support_Scope')); fillSelect('customer', by('Customername')); fillSelect('project', by('ProjectName')); fillSelect('category', by('Newgen Issue Sub Category')); const minDate=new Date(Math.min(...data.map(d=>d._created).filter(Boolean).map(d=>d.getTime()))); const maxDateCandidates=data.flatMap(d=>[d._created,d._closed].filter(Boolean)); const maxDate=new Date(Math.max(...maxDateCandidates.map(d=>d.getTime()))); setDateInput('dateFrom',minDate); setDateInput('dateTo',maxDate); ['severity','priority','userEnv','supportScope','customer','project','category','dateFrom','dateTo','onlyGold','onlyOpen','onlyBreach','topN','problemTypeSource','rwStartDate','rwWeeks'].forEach(id=>document.getElementById(id).addEventListener('change', ()=>{WILL_TOAST=true; applyFiltersAndRender();})); document.querySelectorAll('input[name="topType"]').forEach(el=>el.addEventListener('change', ()=>{WILL_TOAST=true; applyFiltersAndRender();})); document.getElementById('resetFilters').onclick=()=>{ ['onlyGold','onlyOpen','onlyBreach'].forEach(id=>document.getElementById(id).checked=false); selectNone(['severity','priority','userEnv','supportScope','customer','project','category']); setDateInput('dateFrom',minDate); setDateInput('dateTo',maxDate); document.getElementById('topN').value=10; document.getElementById('problemTypeSource').value='Newgen'; document.querySelector('input[name="topType"][value="Customer"]').checked=true; document.getElementById('rwStartDate').value=''; document.getElementById('rwWeeks').value=2; WILL_TOAST=true; applyFiltersAndRender(); }; window.addEventListener('resize', ()=>rerender()); updatePadLabel(); }
+
+    function setDateInput(id,d){ if(!isFinite(d)) return; document.getElementById(id).value=toYMD(d); }
+    function fillSelect(id,values){ const el=document.getElementById(id); el.innerHTML=''; (values||[]).forEach(v=>{ const opt=document.createElement('option'); opt.value=v; opt.textContent=v; el.appendChild(opt); }); }
+    function getMulti(id){ const opts=[...document.getElementById(id).options]; return opts.filter(o=>o.selected).map(o=>o.value); }
+    function selectNone(ids){ ids.forEach(id=>{ [...document.getElementById(id).options].forEach(o=>o.selected=false); }); }
+
+    function applyFiltersAndRender(){ const df=document.getElementById('dateFrom').value? new Date(document.getElementById('dateFrom').value+'T00:00:00'):null; const dt=document.getElementById('dateTo').value? new Date(document.getElementById('dateTo').value+'T23:59:59'):null; FILTERS={ dateFrom:df, dateTo:dt, severity:new Set(getMulti('severity')), priority:new Set(getMulti('priority')), userEnv:new Set(getMulti('userEnv')), support:new Set(getMulti('supportScope')), customer:new Set(getMulti('customer')), project:new Set(getMulti('project')), category:new Set(getMulti('category')), onlyGold:document.getElementById('onlyGold').checked, onlyOpen:document.getElementById('onlyOpen').checked, onlyBreach:document.getElementById('onlyBreach').checked, topN: Math.max(3, Math.min(25, parseInt(document.getElementById('topN').value||'10',10))), topType: document.querySelector('input[name="topType"]:checked').value, ptSource: document.getElementById('problemTypeSource').value, rwStart: document.getElementById('rwStartDate').value? new Date(document.getElementById('rwStartDate').value+'T00:00:00'): new Date(2026,2,1), rwWeeks: Math.max(1, Math.min(26, parseInt(document.getElementById('rwWeeks').value||'2',10))) }; renderAll(DATA.filter(row=>passes(row, FILTERS))); }
+
+    function passes(d,f){ if(f.dateFrom && d._created < f.dateFrom) return false; if(f.dateTo && d._created > f.dateTo) return false; if(f.severity.size && !f.severity.has(d['NewgenSeverity'])) return false; if(f.priority.size && !f.priority.has(d['Customer Priority'])) return false; if(f.userEnv.size && !f.userEnv.has(d['UserEnvironmentType'])) return false; if(f.support.size && !f.support.has(d['Support_Scope'])) return false; if(f.customer.size && !f.customer.has(d['Customername'])) return false; if(f.project && f.project.size && !f.project.has(d['ProjectName'])) return false; if(f.category.size && !f.category.has(d['Newgen Issue Sub Category'])) return false; if(f.onlyGold && String(d.GoldCustomer||'').toLowerCase()!=='yes') return false; if(f.onlyOpen && (d._closed || String(d.CurrentStatus||'').toLowerCase()==='exit')) return false; if(f.onlyBreach && d['Response_TicketSLAMet']==='Yes' && d['Resolution_TicketSLAMet']==='Yes') return false; return true; }
+
+    function rerender(){ if(LAST_ROWS && LAST_ROWS.length) renderAll(LAST_ROWS); }
+
+    function baseLayout(){ return { paper_bgcolor:'rgba(255,255,255,0)', plot_bgcolor:'rgba(255,255,255,0)', font:{ family:'Times New Roman, Times, serif', color:'#000' } }; }
+    function applyMargins(elId, layout){ const el=document.getElementById(elId); const w=(el && el.clientWidth)? el.clientWidth: 800; let lr; if(PADDING.mode==='px') lr=Math.max(0, parseInt(PADDING.value,10)||0); else lr=Math.max(0, Math.round(w * (parseInt(padValue.value,10)||0)/100)); layout=layout||{}; layout.margin=layout.margin||{}; layout.margin.l=lr; layout.margin.r=lr; layout.margin.t= layout.margin.t ?? 20; layout.margin.b= layout.margin.b ?? 60; return layout; }
+    function palette(){ return ['#7c3aed','#2563eb','#10b981','#f59e0b','#ef4444','#14b8a6','#f97316','#06b6d4','#a855f7','#22c55e']; }
+
+    function renderVolume(rows){ const dayCounts={}; rows.forEach(r=>{ const d=r._createdYMD; if(d) dayCounts[d]=(dayCounts[d]||0)+1;}); const days=Object.keys(dayCounts).sort(); const y=days.map(d=>dayCounts[d]); const traces=[{x:days,y, type:'scatter', mode:'lines+markers', name:'Tickets', line:{color:'var(--accent-blue-1)', width:3}, marker:{size:6, color:'var(--accent-blue-1)'}}]; let layout=baseLayout(); layout.yaxis={title:'Tickets', gridcolor:'rgba(0,0,0,0.08)'}; layout.xaxis={title:'Date', gridcolor:'rgba(0,0,0,0.08)'}; layout=applyMargins('chartVolume', layout); Plotly.newPlot('chartVolume', traces, layout, {displaylogo:false, responsive:true}); removeShimmer('chartVolume'); }
+    function renderProblemType(rows,source){ const field=source==='Customer'? 'Problem Type (Customer)':'Problem Type (Newgen)'; const counts=new Map(); rows.forEach(r=>{ const k=r[field]||'Unspecified'; counts.set(k,(counts.get(k)||0)+1);}); const sorted=[...counts.entries()].sort((a,b)=> b[1]-a[1]); const labels=sorted.map(([k,_])=>k); const values=sorted.map(([_,v])=>v); const colors=labels.map((_,i)=> palette()[i%palette().length]); const traces=[{x:labels,y:values,type:'bar',marker:{color:colors}}]; let layout=baseLayout(); layout.yaxis={title:'Tickets',gridcolor:'rgba(0,0,0,0.08)'}; layout.xaxis={title:'Problem Type',tickangle:-35,automargin:true,gridcolor:'rgba(0,0,0,0.06)'}; layout=applyMargins('chartProblemType',layout); Plotly.newPlot('chartProblemType',traces,layout,{displaylogo:false,responsive:true}); removeShimmer('chartProblemType'); }
+    function renderSLA(rows){ const respYes=rows.filter(r=>String(r['Response_TicketSLAMet']||'').toLowerCase()==='yes').length; const respNo=rows.filter(r=>String(r['Response_TicketSLAMet']||'').toLowerCase()==='no').length; const resoYes=rows.filter(r=>String(r['Resolution_TicketSLAMet']||'').toLowerCase()==='yes').length; const resoNo=rows.filter(r=>String(r['Resolution_TicketSLAMet']||'').toLowerCase()==='no').length; const traces=[{values:[respYes,respNo],labels:['Response Met','Response Breach'],type:'pie',hole:0.55,domain:{row:0,column:0},marker:{colors:['#10b981','#ef4444']},textinfo:'label+percent',name:'Response SLA',showlegend:false},{values:[resoYes,resoNo],labels:['Resolution Met','Resolution Breach'],type:'pie',hole:0.55,domain:{row:0,column:1},marker:{colors:['#2563eb','#ef4444']},textinfo:'label+percent',name:'Resolution SLA',showlegend:false}]; let layout=baseLayout(); layout.grid={rows:1,columns:2}; layout=applyMargins('chartSLA',layout); Plotly.newPlot('chartSLA',traces,layout,{displaylogo:false,responsive:true}).then(()=>{ const container=document.getElementById('chartSLA'); const old=container.querySelector('.custom-sla-legend'); if(old) old.remove(); const legend=document.createElement('div'); legend.className='custom-sla-legend'; legend.innerHTML=`<div class="item"><span class="swatch" style="background:#10b981"></span><span>Response Met</span></div><div class="item"><span class="swatch" style="background:#2563eb"></span><span>Resolution Met</span></div><div class="item"><span class="swatch" style="background:#ef4444"></span><span>Breach</span></div>`; container.appendChild(legend); removeShimmer('chartSLA'); }); }
+    function renderSeverity(rows){ const sevOrder=['S1','S2','S3']; const colors={'S1':'#ef4444','S2':'#f59e0b','S3':'#22c55e'}; const x=sevOrder; const y=x.map(s=> rows.filter(r=>r['NewgenSeverity']===s).length); const traces=[{x,y,type:'bar',marker:{color:x.map(s=>colors[s])}}]; let layout=baseLayout(); layout.yaxis={title:'Tickets',gridcolor:'rgba(0,0,0,0.08)'}; layout.xaxis={title:'Severity',gridcolor:'rgba(0,0,0,0.06)'}; layout=applyMargins('chartSeverity',layout); Plotly.newPlot('chartSeverity',traces,layout,{displaylogo:false,responsive:true}); removeShimmer('chartSeverity'); }
+    function renderTop(rows,type,topN){ const key=type==='Project'?'ProjectName':'Customername'; const counts=new Map(); rows.forEach(r=>{ const k=r[key]||'Unknown'; counts.set(k,(counts.get(k)||0)+1)}); const sorted=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,topN); const labels=sorted.map(([k,_])=>k); const values=sorted.map(([_,v])=>v); const colors=labels.map((_,i)=>palette()[i%palette().length]); const traces=[{x:labels,y:values,type:'bar',marker:{color:colors}}]; let layout=baseLayout(); layout.yaxis={title:'Tickets',gridcolor:'rgba(0,0,0,0.08)'}; layout.xaxis={title:(type==='Project'?'Project':'Customer'),tickangle:-35,automargin:true,gridcolor:'rgba(0,0,0,0.06)'}; layout=applyMargins('chartTop',layout); Plotly.newPlot('chartTop',traces,layout,{displaylogo:false,responsive:true}); removeShimmer('chartTop'); }
+
+    // Native HTML table for Filtered Tickets
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function renderTable(rows){ const cols=[
+        ['Ticketid','Ticket ID','col-id'],
+        ['Customername','Customer','col-customer'],
+        ['ProjectName','Project','col-project'],
+        ['NewgenSeverity','Severity','col-sev'],
+        ['Customer Priority','Priority','col-priority'],
+        ['UserEnvironmentType','Env','col-env'],
+        ['Support_Scope','Support Scope','col-scope'],
+        ['Newgen Issue Sub Category','Issue Sub Category','col-subcat'],
+        ['Problem Type (Newgen)','Problem Type (Newgen)','col-ptn'],
+        ['Problem Type (Customer)','Problem Type (Customer)','col-ptc'],
+        ['Response_TicketSLAMet','Response SLA','col-resp'],
+        ['Resolution_TicketSLAMet','Resolution SLA','col-reso'],
+        ['ReportingTime','Reporting Time','col-report'],
+        ['FirstResponseTime','First Response','col-first'],
+        ['ClosingDate','Closing Date','col-close'],
+        ['CurrentStatus','Status','col-status'],
+        ['AssigntoUserName','Assignee','col-assignee']
+      ];
+      let html = '<table class="table-native"><thead><tr>' + cols.map(([_,lbl,cls])=>`<th class="${cls}">${esc(lbl)}</th>`).join('') + '</tr></thead><tbody>';
+      for(const r of rows){ html += '<tr>' + cols.map(([key,_,cls])=>`<td class="${cls}">${esc(r[key])}</td>`).join('') + '</tr>'; }
+      html += '</tbody></table>';
+      const container = document.getElementById('tableDiv'); container.innerHTML = html; removeShimmer('tableDiv'); }
+
+    function renderResourceWeekly(rows,startDate,weeks){ const start=startDate instanceof Date&&!isNaN(startDate)?new Date(startDate):new Date(2026,2,1); const nWeeks=(typeof weeks==='number'&&isFinite(weeks))?Math.max(1,Math.min(26,weeks)):2; const endOverall=addDays(start,nWeeks*7); document.getElementById('rwRangeLabel').textContent=`Showing closures from ${fmtDMY(start)} to ${fmtDMY(endOverall)} (end exclusive)`; const buckets=[]; for(let i=0;i<nWeeks;i++){ const s=addDays(start,i*7),e=addDays(start,(i+1)*7); buckets.push({idx:i,s,e,label:`Week ${i+1} : ${fmtDMY(s)} - ${fmtDMY(e)}`})} const closedRows=rows.filter(r=>r._closed&&r._closed>=start&&r._closed<endOverall); const keyFn=(r)=>`${r['AssigntoUserName']||'Unassigned'}|||${r['Customername']||'Unknown'}`; const map=new Map(); closedRows.forEach(r=>{ const c=r._closed; const diffDays=Math.floor((c-start)/86400000); const wi=Math.floor(diffDays/7); if(wi<0||wi>=nWeeks)return; const key=keyFn(r); if(!map.has(key))map.set(key,{resource:r['AssigntoUserName']||'Unassigned',customer:r['Customername']||'Unknown',weeks:Array(nWeeks).fill(0),total:0}); const rec=map.get(key); rec.weeks[wi]+=1; rec.total+=1}); const rowsOut=[...map.values()].sort((a,b)=>{ const r=String(a.resource).localeCompare(String(b.resource)); return r!==0?r:String(a.customer).localeCompare(String(b.customer))}); const header=['Resource Name','Customer Name',...buckets.map(b=>b.label),'Total (Weeks)']; const resCol=rowsOut.map(x=>x.resource),custCol=rowsOut.map(x=>x.customer),weekCols=buckets.map((b,i)=>rowsOut.map(x=>x.weeks[i]||0)),totalCol=rowsOut.map(x=>x.total||0); const totals=Array(nWeeks).fill(0); rowsOut.forEach(x=>x.weeks.forEach((v,i)=>totals[i]+=v)); const grandTotal=totals.reduce((a,b)=>a+b,0); const cells=[resCol,custCol,...weekCols,totalCol]; const data=[{type:'table',header:{values:header,fill:{color:'rgba(147,197,253,0.85)'},font:{family:'Times New Roman, Times, serif',color:'#000',size:11},align:'left',line:{color:'rgba(0,0,0,0.15)'}},cells:{values:cells,fill:{color:'rgba(255,255,255,0.98)'},font:{family:'Times New Roman, Times, serif',color:'#000',size:10},align:'left',line:{color:'rgba(0,0,0,0.12)'}}}]; let layout=baseLayout(); layout=applyMargins('tableResourceWeekly',layout); Plotly.newPlot('tableResourceWeekly',data,layout,{displaylogo:false,responsive:true}); document.getElementById('rwTotalsNote').textContent=`Grand total (all resources/customers) across ${nWeeks} week(s): ${grandTotal}`; removeShimmer('tableResourceWeekly'); }
+
+    function renderAll(rows){ LAST_ROWS=rows; exportBtn.disabled=!(rows && rows.length); if(!rows || !rows.length){ document.getElementById('kpiOpen').textContent='0'; document.getElementById('kpiRespSLA').textContent='—'; document.getElementById('kpiResoSLA').textContent='—'; Plotly.purge('chartVolume'); Plotly.purge('chartProblemType'); Plotly.purge('chartSLA'); Plotly.purge('chartSeverity'); Plotly.purge('chartTop'); document.getElementById('tableResourceWeekly').innerHTML=''; document.getElementById('tableDiv').innerHTML=''; document.getElementById('rwRangeLabel').textContent=''; document.getElementById('rwTotalsNote').textContent=''; return; } const openCount= rows.filter(r=> !r._isClosed).length; const respYes= rows.filter(r=> String(r['Response_TicketSLAMet']||'').toLowerCase()==='yes').length; const respBase= rows.filter(r=> r['Response_TicketSLAMet']!=null && r['Response_TicketSLAMet']!=='').length; const resoYes= rows.filter(r=> String(r['Resolution_TicketSLAMet']||'').toLowerCase()==='yes').length; const resoBase= rows.filter(r=> r['Resolution_TicketSLAMet']!=null && r['Resolution_TicketSLAMet']!=='').length; document.getElementById('kpiOpen').textContent= String(openCount); document.getElementById('kpiOpenSub').textContent= `${rows.length} tickets in view`; document.getElementById('kpiRespSLA').textContent= respBase? pct(respYes, respBase).toFixed(1)+'%': '—'; document.getElementById('kpiRespSLASub').textContent= `${respYes}/${respBase} met`; document.getElementById('kpiResoSLA').textContent= resoBase? pct(resoYes, resoBase).toFixed(1)+'%': '—'; document.getElementById('kpiResoSLASub').textContent= `${resoYes}/${resoBase} met`; renderVolume(rows); renderProblemType(rows, FILTERS.ptSource); renderSLA(rows); renderSeverity(rows); renderTop(rows, FILTERS.topType, FILTERS.topN); renderResourceWeekly(rows, FILTERS.rwStart, FILTERS.rwWeeks); renderTable(rows); if (WILL_TOAST) { showToast(`Data updated · ${rows.length} tickets`); WILL_TOAST=false; } }
+
+    function blink(elId){ if(!ANIMATIONS_ENABLED) return; const el=document.getElementById(elId); if(!el) return; el.classList.remove('chart-refresh'); void el.offsetWidth; el.classList.add('chart-refresh'); }
+    const __rv=renderVolume; renderVolume=(r)=>{ __rv(r); blink('chartVolume'); };
+    const __rp=renderProblemType; renderProblemType=(r,s)=>{ __rp(r,s); blink('chartProblemType'); };
+    const __rsla=renderSLA; renderSLA=(r)=>{ __rsla(r); blink('chartSLA'); };
+    const __rsev=renderSeverity; renderSeverity=(r)=>{ __rsev(r); blink('chartSeverity'); };
+    const __rtop=renderTop; renderTop=(r,t,n)=>{ __rtop(r,t,n); blink('chartTop'); };
+    const __rrw=renderResourceWeekly; renderResourceWeekly=(r,s,w)=>{ __rrw(r,s,w); blink('tableResourceWeekly'); };
+    const _renderAllOriginal = renderAll; renderAll=function(rows){ _renderAllOriginal(rows); if(!rows||!rows.length) return; function animateCount(el, endValue, duration=700, formatter=(v)=>v){ if(!ANIMATIONS_ENABLED){ el.textContent=formatter(endValue); return; } const start=performance.now(); const startValue=0; const decPlaces=String(endValue).includes('.')?(String(endValue).split('.')[1]||'').length:0; function step(now){ const p=Math.min(1,(now-start)/duration); const eased=1-Math.pow(1-p,3); const val=startValue+(endValue-startValue)*eased; el.textContent=formatter(Number(val.toFixed(decPlaces))); if (p<1) requestAnimationFrame(step);} requestAnimationFrame(step);} const kpiOpen=document.getElementById('kpiOpen'); const openFinal=parseFloat(kpiOpen.textContent)||0; animateCount(kpiOpen, openFinal, 700, (v)=>String(Math.round(v))); const kpiResp=document.getElementById('kpiRespSLA'); const respFinal=parseFloat((kpiResp.textContent||'').replace('%',''))||0; animateCount(kpiResp, respFinal, 800, (v)=>v.toFixed(1)+'%'); const kpiReso=document.getElementById('kpiResoSLA'); const resoFinal=parseFloat((kpiReso.textContent||'').replace('%',''))||0; animateCount(kpiReso, resoFinal, 800, (v)=>v.toFixed(1)+'%'); const anyRespBreach = rows.some(r => String(r['Response_TicketSLAMet']||'').toLowerCase()==='no'); const anyResoBreach = rows.some(r => String(r['Resolution_TicketSLAMet']||'').toLowerCase()==='no'); const slaEl = document.getElementById('chartSLA'); if (slaEl){ if (ANIMATIONS_ENABLED && (anyRespBreach || anyResoBreach)) { slaEl.classList.remove('alert'); void slaEl.offsetWidth; slaEl.classList.add('alert'); } else { slaEl.classList.remove('alert'); } } };
+
+    (function(){ const hdr=document.querySelector('header'); let ticking=false; window.addEventListener('scroll',()=>{ if(!ticking){ window.requestAnimationFrame(()=>{ hdr.classList.toggle('scrolled', window.scrollY>6); ticking=false; }); ticking=true; } },{passive:true}); })();
+  </script>
+
+  <footer style="padding:10px 20px 18px;font-size:calc(11px*var(--scale));color:#000;text-align:right;font-family:'Times New Roman', Times, serif;">Native table (sticky header + scroll) for Filtered Tickets · Presenter toast + shimmer + toggle retained.</footer>
+</body>
+</html>
