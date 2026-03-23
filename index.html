@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Helpdesk Performance Dashboard · v6 (resource drilldown)</title>
+<script src="https://cdn.plot.ly/plotly-3.4.0.min.js"></script>
+<style>
+/* --- existing styles preserved --- */
+.res-link{color:var(--accent);font-weight:700;text-decoration:none;cursor:pointer}
+.res-link:hover{text-decoration:underline}
+.res-link.selected{color:#dc2626}
+.breadcrumb{font-size:12px;margin-bottom:6px;color:var(--muted)}
+.breadcrumb span{color:#dc2626;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<!-- BODY CONTENT SAME AS ORIGINAL UNTIL TABLE -->
+<div class="breadcrumb" id="drillBreadcrumb" style="display:none">
+Drilled down to resource: <span id="drillRes"></span> (click to clear)
+</div>
+<div id="tableDiv"></div>
+<script>
+let SELECTED_RESOURCE=null;
+const _renderTable = window.renderTable;
+window.renderTable = function(rows){
+  const finalRows = SELECTED_RESOURCE ? rows.filter(r=>(r['AssigntoUserName']||'Unassigned').trim()===SELECTED_RESOURCE):rows;
+  _renderTable(finalRows);
+  const bc=document.getElementById('drillBreadcrumb');
+  if(SELECTED_RESOURCE){bc.style.display='block';document.getElementById('drillRes').textContent=SELECTED_RESOURCE}
+  else bc.style.display='none';
+}
+const _renderScorecard = window.renderScorecard;
+window.renderScorecard = function(rows){
+  _renderScorecard(rows);
+  document.querySelectorAll('.res-link').forEach(a=>{
+    a.onclick=e=>{e.preventDefault();
+      SELECTED_RESOURCE = SELECTED_RESOURCE===a.dataset.res?null:a.dataset.res;
+      applyFiltersAndRender();
+      document.getElementById('tableDiv').scrollIntoView({behavior:'smooth'});
+    }
+  })
+}
+document.getElementById('drillRes')?.addEventListener('click',()=>{SELECTED_RESOURCE=null;applyFiltersAndRender()});
+</script>
+</body>
+</html>
