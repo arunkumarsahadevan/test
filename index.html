@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Application Project 2 – Africa PRD Tickets Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-3.4.0.min.js"></script>
+  <style>
+    body{margin:0;font-family:system-ui;background:#f6f8fb;color:#0f172a}
+    header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-bottom:1px solid #e5e7eb}
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
+    .panel{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:12px}
+    h3{margin:0 0 10px;font-size:14px}
+    label{font-size:12px;color:#475569}
+    select,input,button{width:100%;margin-top:4px;margin-bottom:8px}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .kpi{border:1px solid #e5e7eb;border-radius:10px;padding:10px}
+    .error{display:none;background:#fee2e2;color:#991b1b;padding:8px;margin:8px;border-radius:8px}
+  </style>
+</head>
+<body>
+<header>
+  <strong>Application Project 2 – Africa PRD Tickets Dashboard</strong>
+  <div>
+    <button id="exportCsv">Export CSV</button>
+    <button id="reload">Reload</button>
+  </div>
+</header>
+<div id="errorBanner" class="error"></div>
+<div class="layout">
+  <aside class="panel">
+    <h3>Filters</h3>
+    <label>Severity</label><select id="severity" multiple></select>
+    <label>Customer</label><select id="customer" multiple></select>
+    <label>Project</label><select id="project" multiple></select>
+  </aside>
+  <main>
+    <section class="panel kpis">
+      <div class="kpi">Open Tickets<br><b id="kpiOpen">—</b></div>
+      <div class="kpi">Response SLA %<br><b id="kpiResp">—</b></div>
+      <div class="kpi">Resolution SLA %<br><b id="kpiReso">—</b></div>
+    </section>
+    <section class="panel"><h3>Resource Efficiency Scorecard</h3><div id="scorecard"></div></section>
+    <section class="panel"><h3>Weekly Closed Tickets</h3><div id="weekly"></div></section>
+    <section class="panel"><h3>SLA Compliance</h3><div id="chartSLA"></div></section>
+    <section class="panel"><h3>Top Customers</h3><div id="chartTop"></div></section>
+    <section class="panel"><h3>Tickets Over Time</h3><div id="chartVolume"></div></section>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
