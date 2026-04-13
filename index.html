@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Application Project 2 – Africa PRD Tickets Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-3.4.0.min.js"></script>
+  <style>
+    body{font-family:system-ui;background:#f6f8fb;margin:0}
+    header{padding:10px 16px;background:white;border-bottom:1px solid #ddd}
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
+    .panel{background:white;border:1px solid #ddd;border-radius:10px;padding:12px}
+    h3{margin-top:0}
+    select,input,button{width:100%;margin-bottom:8px}
+  </style>
+</head>
+<body>
+<header>
+  <b>Application Project 2 – Africa PRD Tickets Dashboard</b>
+  <button id="reload">Reload</button>
+</header>
+<div class="layout">
+  <aside class="panel">
+    <h3>Filters</h3>
+    <label>Severity</label><select id="severity" multiple></select>
+    <label>Customer</label><select id="customer" multiple></select>
+  </aside>
+  <main>
+    <div class="panel"><h3>KPIs</h3>
+      Open: <span id="open"></span>
+    </div>
+    <div class="panel"><h3>Tickets Over Time</h3><div id="chart"></div></div>
+  </main>
+</div>
+<script>
+let DATA = [];
+
+function uniq(arr){return [...new Set(arr.filter(Boolean))];}
+
+function parseDate(v){
+  if(!v) return null;
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+
+async function load(){
+  const res = await fetch('tickets.json?ts='+Date.now());
+  DATA = await res.json();
+  DATA.forEach(r=>r._created=parseDate(r.ReportingTime));
+  initFilters(); render();
+}
+
+function initFilters(){
+  const sev = document.getElementById('severity');
+  const cust = document.getElementById('customer');
+  sev.innerHTML = cust.innerHTML = '';
+  uniq(DATA.map(r=>r.NewgenSeverity)).forEach(v=>sev.add(new Option(v,v)));
+  uniq(DATA.map(r=>r.Customername)).forEach(v=>cust.add(new Option(v,v)));
+}
+
+function render(){
+  let rows = DATA.slice();
+  const sevSel = [...severity.selectedOptions].map(o=>o.value);
+  if(sevSel.length) rows = rows.filter(r=>sevSel.includes(r.NewgenSeverity));
+
+  document.getElementById('open').textContent = rows.filter(r=>!r.ClosingDate).length;
+
+  const map = {};
+  rows.forEach(r=>{if(r._created){const k=r._created.toISOString().slice(0,10); map[k]=(map[k]||0)+1;}});
+  Plotly.newPlot('chart',[{x:Object.keys(map),y:Object.values(map),type:'scatter'}]);
+}
+
+document.getElementById('reload').onclick = load;
+load();
+</script>
+</body>
+</html>
